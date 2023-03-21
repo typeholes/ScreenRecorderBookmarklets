@@ -1,0 +1,143 @@
+<html>
+  <head>
+    <title>screen recording bookmarklets</title>
+    <style>
+      .something {
+        width: 100px;
+        height: 100px;
+        background: repeating-radial-gradient(
+          powderblue,
+          powderblue 8px,
+          white 8px,
+          white 16px
+        );
+        animation: colorChange 1s infinite alternate;
+      }
+
+      @keyframes colorChange {
+        from {
+          /* radial-gradient(farthest-corner at top right, ..) */
+          background-position: left top;
+          background-size: 200% 100%;
+        }
+        49.9% {
+          background-position: left top;
+        }
+        50% {
+          /* radial-gradient(farthest-corner at top center, ..) */
+          background-size: 100% 100%;
+        }
+        50.1% {
+          background-position: right top;
+        }
+        to {
+          /* radial-gradient(farthest-corner at top left, ..) */
+          background-position: right top;
+          background-size: 200% 100%;
+        }
+      }
+    </style>
+
+    <script type="module"></script>
+  </head>
+  <body>
+    Drag the two links below to your bookmarks bar <br>
+    <a id="linkRecordArea" href="">Set Area</a>
+    <a id="linkRecord" href="">Record</a>
+    <br>
+    Using the "Record" bookmark will record the whole page<br>
+    If you wish to record an element, first click the "Set Area" bookmark, then click the element you wish to record.
+    Then click the "Record" bookmark to record the element. <br><br>
+    Try it now on the moving pattern below <br>
+    <div id="recordMe" class="something">hi</div>
+
+
+    <script>
+      const modSrc = `
+import('https://esm.run/html-to-image').then (htmlToImage => {
+      import('https://esm.run/@dhdbstjr98/gif.js').then( (M_GIF) => {
+
+      const GIF = M_GIF.default.default;
+
+
+      function recordScreen() {
+        const el = window.__typeholes_recordEl;
+        record(el, 1, 20);
+      }
+
+      function record(el, delay, frameCnt) {
+        let left, top, width, height;
+        if (el) {
+          ({ left, top, width, height } = el.getBoundingClientRect());
+        }
+
+        const gif = new GIF({
+          workers: 2,
+          quality: 10,
+        });
+
+        let cnt = 0;
+
+        const body = document.body;
+        const bodyWidth = body.clientWidth;
+        const bodyHeight = body.clientHeight;
+        function looper() {
+          htmlToImage
+            .toPixelData(body, { width: bodyWidth, height: bodyHeight })
+            .then((bodyPixels) => {
+              let pixels = bodyPixels;
+              if (left !== undefined) {
+                pixels = new Uint8ClampedArray(width * height * 4);
+                for (let line = 0; line < height; line++) {
+                  const bodyLineStart = (top + line) * bodyWidth * 4;
+                  const lineStart = bodyLineStart + left * 4;
+                  const lineEnd = lineStart + width * 4;
+                  const tgtStart = line * width * 4;
+                  pixels.set(bodyPixels.slice(lineStart, lineEnd), tgtStart);
+                }
+              } else {
+                width = bodyWidth;
+                height = bodyHeight;
+              }
+              const data = new ImageData(pixels, width, height);
+
+              gif.addFrame(data);
+
+              cnt++;
+              if (cnt < frameCnt) {
+                setTimeout(looper, delay);
+              } else {
+                gif.on('finished', function (blob) {
+                  window.open(URL.createObjectURL(blob));
+                });
+
+                gif.render();
+              }
+            });
+        }
+
+        looper();
+      }
+
+      window.recordScreen = recordScreen;
+        recordScreen();
+    })})
+      `;
+      document.getElementById('linkRecordArea').href = `javascript: {
+          window.__typeholes_recordEl = null;
+          document.body.addEventListener('click', function (e) {
+            if (window.__typeholes_recordEl) return;
+            console.log('click', e.pageX, e.pageY);
+            window.__typeholes_recordEl = document.elementFromPoint(e.pageX, e.pageY);
+          });
+        }`;
+      document.getElementById('linkRecord').href = `javascript: { if
+      (!window.__typeholes_recordInitialized) {
+        ${modSrc}
+      } else {
+        recordScreen();
+      }
+  }`;
+    </script>
+  </body>
+</html>
