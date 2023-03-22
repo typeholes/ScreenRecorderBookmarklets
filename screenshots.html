@@ -50,8 +50,11 @@
       <a id="linkRecord" href="">Record</a>
       <br />
       Using the "Record" bookmark will record the whole page by default<br />
-      "Record Options will open a dialog where you can set the delay between frames and the number of frames to capture<br>
-      There is also a button to set the element to capture. After clicking the button, elements will be highlighted under your cursor and you can click to select the element " <br /><br />
+      "Record Options will open a dialog where you can set the delay between
+      frames and the number of frames to capture<br />
+      There is also a button to set the element to capture. After clicking the
+      button, elements will be highlighted under your cursor and you can click
+      to select the element " <br /><br />
       Try it now on the moving pattern below <br />
       <div id="recordMe" class="something">hi</div>
       <br />
@@ -75,8 +78,8 @@
             const optionsDiv = document.createElement('div');
             optionsDiv.style.backgroundColor = 'transparent';
             optionsDiv.style.position = 'fixed';
-            optionsDiv.style.bottom = '-1';
-            optionsDiv.style.right = '-1';
+            optionsDiv.style.bottom = '0px';
+            optionsDiv.style.right = '0px';
             optionsDiv.innerHTML = `
   <div style="display: flex; flex-direction: column; border:1px solid wheat;">
     <label for="typeholes_frame_delay"> Frame Delay
@@ -155,6 +158,11 @@
                const totalCnt = window.__typeholes_record.frameCnt;
                let currentCnt = 0;
                const progressDiv = document.createElement('div');
+               progressDiv.style.position = 'fixed';
+               progressDiv.style.top = '0px';
+               progressDiv.style.left = '0px';
+               progressDiv.style.width = '100%';
+               progressDiv.style.opacity = '0.5';
                progressDiv.innerHTML = `
 <div id="progressBar" style="width: 100%; height: 1rem; background-color: #ddd;">
 <div id="progress" style="width: 0%; height: 1rem; background-color: #400000;">
@@ -248,7 +256,27 @@
                                  setTimeout(looper, delay);
                               } else {
                                  gif.on('finished', function (blob) {
-                                    window.open(URL.createObjectURL(blob));
+                                    const outEl = document.createElement('div');
+                                    window.__typeholes_record.close_output =
+                                       () => {
+                                          outEl.remove();
+                                       };
+                                    outEl.style.position = 'fixed';
+                                    outEl.style.top = '0px';
+                                    outEl.style.left = '0px';
+                                    outEl.style.width = '100%';
+                                    outEl.style.height = '100%';
+                                    outEl.style['background-color'] = '#000000';
+                                    outEl.innerHTML = `<button onclick="__typeholes_record.close_output()" style="position: fixed; right: 0; top: 0; background-color: #880000"">x</button>`;
+                                    const iframe =
+                                       document.createElement('iframe');
+                                    iframe.style.width = '100%';
+                                    iframe.style.height = '100%';
+                                    iframe.src = URL.createObjectURL(blob);
+                                    iframe.backgroundColor = '#000000';
+                                    iframe.allowtransparency = 'false';
+                                    outEl.appendChild(iframe);
+                                    document.body.appendChild(outEl);
                                  });
 
                                  gif.render();
@@ -258,7 +286,6 @@
 
                      looper();
                   }
-
                });
             });
          }
