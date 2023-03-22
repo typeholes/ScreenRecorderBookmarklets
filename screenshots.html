@@ -207,6 +207,8 @@
                      if (el) {
                         ({ left, top, width, height } =
                            el.getBoundingClientRect());
+                        width = Math.floor(width);
+                        height = Math.floor(height);
                      }
 
                      const gif = new GIF({
